@@ -3,24 +3,36 @@ const OWNER_NUMBER = process.env.OWNER_NUMBER;
 
 console.log('[TRUTH-MD] Preload running. SESSION_ID present:', !!SESSION_ID, '| OWNER_NUMBER present:', !!OWNER_NUMBER);
 
-// Catch ANY crash so we can see what kills the process
+// Patch process.exit so we ALWAYS see why the bot exits, even if it removes listeners
+const _origExit = process.exit.bind(process);
+process.exit = function(code) {
+  const stack = new Error('process.exit called').stack;
+  console.error('[TRUTH-MD] process.exit(' + code + ') called. Stack:\n' + stack);
+  _origExit(code);
+};
+
+// Patch removeAllListeners so bot can't silently strip our error handlers
+const _origRemoveAll = process.removeAllListeners.bind(process);
+process.removeAllListeners = function(event) {
+  console.log('[TRUTH-MD] removeAllListeners called for:', event || 'ALL');
+  return _origRemoveAll(event);
+};
+
+// Catch crashes
 process.on('uncaughtException', (err) => {
   console.error('[TRUTH-MD] UNCAUGHT EXCEPTION:', err && err.message, err && err.stack);
-  process.exit(1);
+  _origExit(1);
 });
-
 process.on('unhandledRejection', (reason) => {
-  console.error('[TRUTH-MD] UNHANDLED REJECTION:', reason && reason.message ? reason.message : reason, reason && reason.stack ? reason.stack : '');
-  process.exit(1);
+  console.error('[TRUTH-MD] UNHANDLED REJECTION:', reason && (reason.message || reason));
+  _origExit(1);
 });
-
 process.on('SIGTERM', () => {
-  console.error('[TRUTH-MD] SIGTERM received — process was killed externally (possible memory limit or Heroku R15)');
-  process.exit(143);
+  console.error('[TRUTH-MD] SIGTERM received — killed externally (R14/R15 memory limit?)');
+  _origExit(143);
 });
-
 process.on('exit', (code) => {
-  console.log('[TRUTH-MD] Process exiting with code:', code);
+  console.log('[TRUTH-MD] Process exit event, code:', code);
 });
 
 if (SESSION_ID || OWNER_NUMBER) {

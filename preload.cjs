@@ -1,6 +1,8 @@
 const SESSION_ID = process.env.SESSION_ID;
 const OWNER_NUMBER = process.env.OWNER_NUMBER;
 
+console.log('[TRUTH-MD] Preload running. SESSION_ID present:', !!SESSION_ID, '| OWNER_NUMBER present:', !!OWNER_NUMBER);
+
 if (SESSION_ID || OWNER_NUMBER) {
   const fs = require('fs');
   const path = require('path');

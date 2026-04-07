@@ -11,8 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@replit/connectors-sdk": "^0.3.0",
-    "@whiskeysockets/baileys": "^6.7.18",
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
     "adm-zip": "^0.5.16",
     "awesome-phonenumber": "^5.11.0",
     "axios": "^1.13.6",
@@ -43,6 +42,6 @@
     "ytdl-core": "^4.11.5"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   }
 }

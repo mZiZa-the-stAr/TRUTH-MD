@@ -549,7 +549,14 @@ let _baileysMod = globalThis.__baileysCached || null;
 if (!_baileysMod) {
     try {
         _baileysMod = require('@whiskeysockets/baileys');
-        globalThis.__baileysCached = _baileysMod;
+        // Only cache the REAL module — the require hook may return a lazy
+        // placeholder (.__isLazyPlaceholder === true) instead of throwing.
+        // Caching the placeholder would cause infinite recursion in the proxies.
+        if (_baileysMod && !_baileysMod.__isLazyPlaceholder) {
+            globalThis.__baileysCached = _baileysMod;
+        } else {
+            _baileysMod = null; // treat placeholder as "not yet loaded"
+        }
     } catch(e) {
         if (e.code === 'ERR_REQUIRE_ASYNC_MODULE' || e.code === 'ERR_REQUIRE_ESM') {
             // Async ESM context — will be loaded via import() in connectToWA()
@@ -1598,7 +1605,13 @@ async function startXeonBotInc() {
     // ERR_REQUIRE_ASYNC_MODULE.  In that case the module-level destructuring
     // produces undefined values.  We recover here, inside an async function,
     // using dynamic import() which is always allowed.
-    if (!makeWASocket) {
+    // Trigger async fallback if baileys was not loaded at module-level.
+    // Also trigger if __baileysCached is still the lazy placeholder (set by the
+    // require hook when require() was blocked by an async ESM context).
+    const _needsBaileysLoad = !makeWASocket ||
+        !globalThis.__baileysCached ||
+        globalThis.__baileysCached.__isLazyPlaceholder;
+    if (_needsBaileysLoad) {
         try {
             const _b = await import('@whiskeysockets/baileys');
             makeWASocket = _b.default;

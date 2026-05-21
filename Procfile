@@ -1,1 +1,2 @@
-worker: node --max-old-space-size=512 --optimize-for-size start.js
+web: bash start.sh
+worker: bash start.sh
